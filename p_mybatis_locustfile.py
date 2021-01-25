@@ -65,6 +65,11 @@ class WebsiteUser(HttpLocust):
     wait_time = between(5, 9)
 
 
+if __name__ == "__main__":
+    import os
+
+    os.system("locust -f p_mybatis_locustfile.py --host=localhost:8081")
+
 """
 Locust 类（以及 HttpLocust，因为它是 Locust 类的子类）还允许指定每个模拟用户在执行任务（min_wait 和 max_wait）
 和其他用户行为之间的最小和最大等待时间(以毫秒为单位)。默认情况下，时间是在 min_wait 和 max_wait 之间随机均匀地选择的，

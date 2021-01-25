@@ -1,10 +1,12 @@
-from locust import HttpLocust, TaskSet, task, between, TaskSequence, seq_task
+from locust import HttpLocust, TaskSet, task, between
+import json
 
 """
 定义 Locust 任务，都是普通的可调用函数，它们只接受一个参数(一个 Locust 类实例)
 这些 Locust 任务集中在 TaskSet 类的子类的 tasks 属性中。然后定义了一个 HttpLocust 类的子类，它代表一个用户。
 此外，还定义了一个模拟用户在执行任务之间应该等待多长时间，以及哪个TaskSet类定义了用户的行为。
 """
+
 
 # locustfile 惟一的要求在这个文件中必须至少定义一个继承自 Locust 类
 
@@ -35,28 +37,31 @@ from locust import HttpLocust, TaskSet, task, between, TaskSequence, seq_task
 
 
 class CountryBehavior(TaskSet):
+    header = {"Content-Type": "application/json"}
+
     # @task(n) 中 n 接受一个可选参数 weight，用来指定任务的执行比率，比如 @task(2) 执行频率是 @task(1) 的两倍
     @task(1)
     def query_detail_1(self):
-        self.client.post("/detail", {"countryId": "11"})
+        # json.dumps 可以格式化所有的基本数据类型为字符串，用于规范化 json 串
+        self.client.post("/mybatis/rest/country/detail", json.dumps({"countryId": 11}), headers=self.header)
 
     @task(2)
     def query_detail_2(self):
-        self.client.post("/detail", {"countryId": "22"})
+        self.client.post("/mybatis/rest/country/detail", json.dumps({"countryId": 22}), headers=self.header)
 
 
 # 测试有序执行
-class CountrySeqBehavior(TaskSequence):
-    # @seq_task(n) 指定执行顺序，越小优先级越高
-    # 此处的执行顺序为：执行一次 query_detail_1 → 执行两次 query_detail_2
-    @seq_task(1)
-    def query_detail_1(self):
-        self.client.post("/detail", {"countryId": "11"})
-
-    @seq_task(2)
-    @task(2)
-    def query_detail_2(self):
-        self.client.post("/detail", {"countryId": "22"})
+# class CountrySeqBehavior(TaskSequence):
+#     # @seq_task(n) 指定执行顺序，越小优先级越高
+#     # 此处的执行顺序为：执行一次 query_detail_1 → 执行两次 query_detail_2
+#     @seq_task(1)
+#     def query_detail_1(self):
+#         self.client.post("/mybatis/rest/country/detail", {"countryId": "11"})
+#
+#     @seq_task(2)
+#     @task(2)
+#     def query_detail_2(self):
+#         self.client.post("/mybatis/rest/country/detail", {"countryId": "22"})
 
 
 # 模拟用户
@@ -68,7 +73,7 @@ class WebsiteUser(HttpLocust):
 if __name__ == "__main__":
     import os
 
-    os.system("locust -f p_mybatis_locustfile.py --host=localhost:8081")
+    os.system("locust -f p_mybatis_locustfile.py --host=http://localhost:8081")
 
 """
 Locust 类（以及 HttpLocust，因为它是 Locust 类的子类）还允许指定每个模拟用户在执行任务（min_wait 和 max_wait）
